@@ -3,12 +3,12 @@ FROM node:23-alpine
 WORKDIR /app
 
 # Install dependencies first (layer-cached unless package files change)
-COPY package*.json ./
+COPY Server/package*.json ./
 RUN npm ci --only=production
 
 # Copy app source
-COPY src/ ./src/
-COPY public/ ./public/
+COPY Server/src/ ./src/
+COPY Server/public/ ./public/
 COPY contracts/ ./contracts/
 
 # Data directory for the SQLite database volume

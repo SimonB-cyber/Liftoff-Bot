@@ -46,9 +46,9 @@ Liftoff Competition transforms a standard Liftoff multiplayer session into a str
 - Ideal for league nights, qualifying sessions, tournaments, and curated race events
 
 ### Vote to Skip
-- Players can type `/skip` in game chat to vote for skipping the current track
-- Other players confirm with `/agree`
-- Configurable vote threshold — when enough players agree, the track advances automatically
+- Players type `/skip` in game chat to start a skip vote (3-minute timer)
+- Additional players type `/skip` to add their vote
+- Configurable vote threshold — when enough players vote, the track advances automatically
 - `/info` command shows available player commands
 
 ### Live Spectator View
@@ -240,6 +240,10 @@ npm test
 
 ---
 
+## Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request.
+
 ## License
 
-This project is currently private. All rights reserved.
+This project is licensed under the [MIT License](LICENSE).

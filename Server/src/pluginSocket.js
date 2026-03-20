@@ -30,7 +30,7 @@ function setCurrentTrack(info) {
   // Block chat commands for a window after each track change.
   // Liftoff replays the entire chat history when the scene reloads, which causes
   // a burst of chat_message events with fresh timestamps — including old /skip and
-  // /agree messages that would otherwise re-trigger the vote system.
+  // /skip messages that would otherwise re-trigger the vote system.
   state.applyChatCooldown();
   // Cancel any active skip vote — it no longer applies to the new track
   if (skipVote.isActive()) {
@@ -278,14 +278,12 @@ function handlePluginEvent(jsonLine) {
     // Ignore all commands during the post-track-change cooldown window.
     if (!state.areChatCommandsAllowed()) return;
     if (msg === '/info') {
-      sendCommand({ cmd: 'send_chat', message: '<color=#00BFFF>COMMANDS</color> <color=#00FF00>/skip</color> <color=#FFFF00>(vote to skip track)</color> <color=#00FF00>/agree</color> <color=#FFFF00>(vote yes on active skip)</color>' });
+      sendCommand({ cmd: 'send_chat', message: '<color=#00BFFF>COMMANDS</color> <color=#00FF00>/skip</color> <color=#FFFF00>(vote to skip track)</color>' });
     } else if (msg === '/skip') {
       // Use user_id (Steam ID) as the voter key — event.actor can be null if the
       // plugin couldn't resolve the Photon actor number, which causes all unresolved
       // players to collide on the same null key in the voters Set.
       skipVote.handleSkipVoteCommand(event.user_id || event.nick);
-    } else if (msg === '/agree') {
-      skipVote.handleAgreeCommand(event.user_id || event.nick);
     }
   }
 

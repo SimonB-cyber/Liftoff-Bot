@@ -1,0 +1,12 @@
+node_modules
+*.db
+*.db-wal
+*.db-shm
+*.log
+.env
+.git
+Server/data/
+Server/certbot/
+Server/nginx/
+Docs/
+.claude/

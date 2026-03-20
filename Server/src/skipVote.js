@@ -1,8 +1,9 @@
 /**
  * Skip-vote module.
  *
- * Manages the in-game /skip and /agree chat commands that let players
- * collectively vote to skip the current playlist track.
+ * Manages the in-game /skip chat command that lets players collectively
+ * vote to skip the current playlist track. The first /skip starts a vote;
+ * subsequent /skip commands from other players count as additional votes.
  *
  * Dependencies are injected via init() so this module stays decoupled
  * from the WebSocket transport layer.
@@ -51,9 +52,15 @@ function handleSkipVoteCommand(voterId) {
   }
 
   if (skipVote.active) {
+    if (skipVote.voters.has(voterId)) {
+      _sendCommand({ cmd: 'send_chat', message: '<color=#FFFF00>You have already voted.</color>' });
+      return;
+    }
+    skipVote.voters.add(voterId);
     const { needed } = getSkipVoteInfo();
     const have = skipVote.voters.size;
-    _sendCommand({ cmd: 'send_chat', message: `<color=#00BFFF>SKIP VOTE</color> <color=#FFFF00>In progress:</color> <color=#00FF00>${have}/${needed}</color> <color=#FFFF00>— Type /agree</color>` });
+    _sendCommand({ cmd: 'send_chat', message: `<color=#00BFFF>SKIP VOTE</color> <color=#00FF00>${have}/${needed}</color>` });
+    checkSkipVoteThreshold();
     return;
   }
 
@@ -63,7 +70,7 @@ function handleSkipVoteCommand(voterId) {
   skipVote.voters.add(voterId); // the initiator counts as a vote
 
   const { realPlayers, needed } = getSkipVoteInfo();
-  _sendCommand({ cmd: 'send_chat', message: `<color=#00FF00>SKIP VOTE</color> <color=#FFFF00>Need</color> <color=#00BFFF>${needed}/${realPlayers}</color> <color=#FFFF00>— Type /agree</color> <color=#FF0000>(3m)</color>` });
+  _sendCommand({ cmd: 'send_chat', message: `<color=#00FF00>SKIP VOTE</color> <color=#FFFF00>Need</color> <color=#00BFFF>${needed}/${realPlayers}</color> <color=#FFFF00>— Type /skip</color> <color=#FF0000>(3m)</color>` });
 
   // Check immediately in case threshold already met
   checkSkipVoteThreshold();
@@ -74,25 +81,6 @@ function handleSkipVoteCommand(voterId) {
       _sendCommand({ cmd: 'send_chat', message: '<color=#FF0000>SKIP VOTE</color> <color=#FFFF00>Skip vote expired.</color>' });
     }
   }, SKIP_VOTE_TIMEOUT_MS);
-}
-
-function handleAgreeCommand(voterId) {
-  if (!skipVote.active) {
-    _sendCommand({ cmd: 'send_chat', message: '<color=#FF0000>SKIP</color> <color=#FFFF00>No vote active. Type /skip to start.</color>' });
-    return;
-  }
-
-  if (skipVote.voters.has(voterId)) {
-    _sendCommand({ cmd: 'send_chat', message: '<color=#FFFF00>You have already voted.</color>' });
-    return;
-  }
-
-  skipVote.voters.add(voterId);
-  const { needed } = getSkipVoteInfo();
-  const have = skipVote.voters.size;
-  _sendCommand({ cmd: 'send_chat', message: `<color=#00BFFF>SKIP VOTE</color> <color=#00FF00>${have}/${needed}</color>` });
-
-  checkSkipVoteThreshold();
 }
 
 function checkSkipVoteThreshold() {
@@ -117,5 +105,4 @@ module.exports = {
   isActive,
   cancelSkipVote,
   handleSkipVoteCommand,
-  handleAgreeCommand,
 };
