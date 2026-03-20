@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liftoff Competition</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #111318;
+      border-bottom: 2px solid #f97316;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header h1 { font-size: 1.4rem; color: #f97316; letter-spacing: 0.05em; }
+    #plugin-status {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #444;
+      transition: background 0.3s;
+    }
+    .dot.connected { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .dot.disconnected { background: #ef4444; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1rem; display: grid; gap: 2rem; }
+
+    /* Pilot activity stats bar */
+    .activity-bar {
+      display: flex;
+      gap: 1rem;
+    }
+    .activity-card {
+      flex: 1;
+      background: #111318;
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    .activity-card .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #555;
+    }
+    .activity-card .value {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #f97316;
+      font-variant-numeric: tabular-nums;
+    }
+    .activity-card .sublabel {
+      font-size: 0.75rem;
+      color: #444;
+    }
+
+    section {
+      background: #111318;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    section h2 {
+      padding: 0.75rem 1.25rem;
+      background: #16181f;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f97316;
+      border-bottom: 1px solid #222;
+    }
+
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      padding: 0.6rem 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #666;
+      border-bottom: 1px solid #1e1e24;
+    }
+    td {
+      padding: 0.65rem 1rem;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #18181e;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #16181f; }
+
+    .rank { color: #666; width: 2.5rem; }
+    .rank.gold   { color: #f59e0b; font-weight: 700; }
+    .rank.silver { color: #94a3b8; font-weight: 700; }
+    .rank.bronze { color: #b45309; font-weight: 700; }
+
+    .lap-time { font-variant-numeric: tabular-nums; font-weight: 600; color: #f0f0f0; }
+    .best-time { color: #a855f7; }
+    .delta-neg { color: #22c55e; }
+    .delta-pos { color: #ef4444; }
+    .pilot-name { font-weight: 500; }
+
+    .empty { padding: 2rem; text-align: center; color: #444; font-size: 0.9rem; }
+
+    .online-dot { color: #22c55e; font-size: 0.75rem; }
+
+    .lap-new { animation: flashRow 1s ease-out; }
+    @keyframes flashRow {
+      0%   { background: rgba(249,115,22,0.25); }
+      100% { background: transparent; }
+    }
+
+    .race-meta {
+      padding: 0.5rem 1.25rem;
+      font-size: 0.8rem;
+      color: #555;
+      border-bottom: 1px solid #1e1e24;
+    }
+
+    @media (max-width: 600px) {
+      .activity-bar { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚡ Liftoff Competition</h1>
+  <div id="plugin-status">
+    <div class="dot" id="status-dot"></div>
+    <span id="status-label">Connecting…</span>
+  </div>
+</header>
+
+<main>
+  <!-- Pilot activity summary -->
+  <div class="activity-bar">
+    <div class="activity-card">
+      <div class="label">Unique Pilots</div>
+      <div class="value" id="activity-24h">—</div>
+      <div class="sublabel">Last 24 hours</div>
+    </div>
+    <div class="activity-card">
+      <div class="label">Unique Pilots</div>
+      <div class="value" id="activity-7d">—</div>
+      <div class="sublabel">Last 7 days</div>
+    </div>
+    <div class="activity-card">
+      <div class="label">Unique Pilots</div>
+      <div class="value" id="activity-30d">—</div>
+      <div class="sublabel">Last 30 days</div>
+    </div>
+  </div>
+
+  <section id="live-section">
+    <h2>Race in Progress</h2>
+    <div class="race-meta" id="race-meta"></div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Pilot</th>
+          <th>Laps</th>
+          <th>Best Lap</th>
+          <th>Last Lap</th>
+          <th>Delta Best</th>
+        </tr>
+      </thead>
+      <tbody id="live-body">
+        <tr><td colspan="6" class="empty">Waiting for race data…</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Players Online</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Pilot</th>
+          <th>Laps</th>
+          <th>Best Lap</th>
+        </tr>
+      </thead>
+      <tbody id="players-body">
+        <tr><td colspan="3" class="empty">No pilots in session.</td></tr>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<script src="/js/shared.js"></script>
+<script src="/js/public.js"></script>
+</body>
+</html>

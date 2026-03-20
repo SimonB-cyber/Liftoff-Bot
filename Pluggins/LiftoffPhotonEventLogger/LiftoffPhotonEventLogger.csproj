@@ -1,0 +1,85 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <Deterministic>true</Deterministic>
+  </PropertyGroup>
+
+  <!-- Set LIFTOFF_DIR environment variable to override the default Liftoff install path -->
+  <PropertyGroup>
+    <LIFTOFF_DIR Condition="'$(LIFTOFF_DIR)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Liftoff</LIFTOFF_DIR>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BEPINEX_CORE_DIR Condition="Exists('$(LIFTOFF_DIR)\BepInEx\core\BepInEx.dll')">$(LIFTOFF_DIR)\BepInEx\core</BEPINEX_CORE_DIR>
+  </PropertyGroup>
+
+  <Target Name="CheckBepInEx" BeforeTargets="Build">
+    <Warning Condition="!Exists('$(BEPINEX_CORE_DIR)\BepInEx.dll')" Text="BepInEx not found at '$(BEPINEX_CORE_DIR)'. Set LIFTOFF_DIR environment variable to your Liftoff install folder." />
+  </Target>
+
+  <ItemGroup>
+    <Reference Include="BepInEx">
+      <HintPath>$(BEPINEX_CORE_DIR)\BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="0Harmony">
+      <HintPath>$(BEPINEX_CORE_DIR)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\UnityEngine.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine.SharedInternalsModule">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\UnityEngine.SharedInternalsModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="PhotonUnityNetworking">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\PhotonUnityNetworking.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="PhotonRealtime">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\PhotonRealtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="Photon3Unity3D">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\Photon3Unity3D.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+
+    <Reference Include="ExitGames.Client.Photon">
+      <HintPath>$(LIFTOFF_DIR)\Liftoff_Data\Managed\Photon3Unity3D.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

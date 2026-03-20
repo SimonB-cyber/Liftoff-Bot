@@ -1,0 +1,47 @@
+# Node.js
+node_modules/
+
+# .NET build output
+bin/
+obj/
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Environment (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# Logs
+Logs/
+*.log
+
+# Decompiled game assemblies
+.decompiled_*/
+
+# Tool stores
+.tools/
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Claude Code
+.claude/
+
+# SSL certs and auth (generated on server)
+Server/certbot/
+Server/nginx/.htpasswd
+
+# Docker data volume
+Server/data/

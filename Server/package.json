@@ -1,0 +1,22 @@
+{
+  "name": "liftoff-competition-server",
+  "version": "1.0.0",
+  "description": "Competition platform server for Liftoff multiplayer events",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "ajv": "^8.18.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.3",
+    "express-rate-limit": "^8.3.1",
+    "ws": "^8.16.0"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.0"
+  }
+}

@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Liftoff Competition</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0d0d0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #111318;
+      border-bottom: 2px solid #f97316;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    header h1 { font-size: 1.4rem; color: #f97316; letter-spacing: 0.05em; }
+    header a { margin-left: auto; font-size: 0.8rem; color: #666; text-decoration: none; }
+    header a:hover { color: #f97316; }
+
+    .status-bar {
+      background: #0f1014;
+      border-bottom: 1px solid #1e1e24;
+      padding: 0.5rem 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.8rem;
+      color: #666;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; display: inline-block; margin-right: 0.4rem; }
+    .dot.connected { background: #22c55e; box-shadow: 0 0 6px #22c55e; }
+    .dot.disconnected { background: #ef4444; }
+
+    main { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; display: grid; gap: 1.5rem; }
+
+    section {
+      background: #111318;
+      border: 1px solid #222;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    section h2 {
+      padding: 0.75rem 1.25rem;
+      background: #16181f;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #f97316;
+      border-bottom: 1px solid #222;
+    }
+    .section-body { padding: 1.25rem; display: grid; gap: 1rem; }
+
+    label { font-size: 0.8rem; color: #888; display: block; margin-bottom: 0.3rem; }
+
+    select, input[type="text"], input[type="password"] {
+      width: 100%;
+      background: #0d0d0f;
+      border: 1px solid #2a2a32;
+      border-radius: 5px;
+      color: #e0e0e0;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    select:focus, input:focus { border-color: #f97316; }
+
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+    button {
+      padding: 0.55rem 1.25rem;
+      border: none;
+      border-radius: 5px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-primary { background: #f97316; color: #000; }
+    .btn-secondary { background: #1e1e28; color: #e0e0e0; border: 1px solid #333; }
+    .btn-danger { background: #ef4444; color: #fff; }
+
+    .btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      background: #1e1e28;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 0.75rem 1.25rem;
+      font-size: 0.85rem;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+      max-width: 320px;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.ok { border-color: #22c55e; color: #22c55e; }
+    .toast.err { border-color: #ef4444; color: #ef4444; }
+
+    #token-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+    }
+    .token-box {
+      background: #111318;
+      border: 1px solid #333;
+      border-radius: 10px;
+      padding: 2rem;
+      width: 360px;
+      display: grid;
+      gap: 1rem;
+    }
+    .token-box h2 { color: #f97316; font-size: 1rem; }
+    .token-box p { font-size: 0.85rem; color: #888; }
+
+    .catalog-info { font-size: 0.8rem; color: #555; }
+
+    #ws-dot { display: inline-block; }
+
+    /* Playlist styles */
+    .playlist-grid { display: grid; grid-template-columns: 220px 1fr; gap: 1rem; }
+    .playlist-list { border-right: 1px solid #1e1e24; padding-right: 1rem; }
+    .playlist-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      padding: 0.5rem 0.6rem; border-radius: 5px; cursor: pointer;
+      font-size: 0.85rem; margin-bottom: 0.25rem;
+      border: 1px solid transparent;
+    }
+    .playlist-item:hover { background: #16181f; }
+    .playlist-item.active { border-color: #f97316; background: #1a1008; }
+    .playlist-item.running { border-color: #22c55e; background: #071510; }
+    .playlist-item-name { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .playlist-item-count { font-size: 0.75rem; color: #555; }
+    .track-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0; border-bottom: 1px solid #18181e; font-size: 0.85rem; }
+    .track-row:last-child { border-bottom: none; }
+    .track-row-label { flex: 1; color: #ccc; }
+    .track-pos { width: 1.8rem; text-align: center; color: #444; font-size: 0.8rem; }
+    .track-pos.current { color: #22c55e; font-weight: 700; }
+    .runner-bar {
+      background: #071510; border: 1px solid #22c55e; border-radius: 6px;
+      padding: 0.6rem 1rem; display: flex; align-items: center; gap: 1rem;
+      font-size: 0.85rem; flex-wrap: wrap;
+    }
+    .runner-bar.stopped { background: #0f1014; border-color: #333; color: #555; }
+    .runner-label { color: #22c55e; font-weight: 600; }
+    .runner-track { color: #e0e0e0; }
+    .runner-next { color: #888; font-size: 0.8rem; margin-left: auto; }
+    .interval-row { display: flex; gap: 0.5rem; align-items: center; }
+    .interval-row input { width: 80px; }
+    .interval-row label { margin: 0; color: #888; }
+    .mini-btn { padding: 0.25rem 0.6rem; font-size: 0.75rem; }
+
+    /* Chat log */
+    .chat-log {
+      list-style: none;
+      max-height: 220px;
+      overflow-y: auto;
+      border: 1px solid #1e1e24;
+      border-radius: 5px;
+      background: #0d0d0f;
+      padding: 0.4rem 0;
+    }
+    .chat-log li {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.83rem;
+      border-bottom: 1px solid #18181e;
+      display: flex;
+      gap: 0.6rem;
+      align-items: baseline;
+    }
+    .chat-log li:last-child { border-bottom: none; }
+    .chat-log-time { font-size: 0.7rem; color: #444; flex-shrink: 0; font-variant-numeric: tabular-nums; }
+    .chat-log-nick { color: #f97316; font-weight: 600; flex-shrink: 0; }
+    .chat-log-msg  { color: #bbb; word-break: break-word; }
+    .chat-log-empty { padding: 0.75rem; text-align: center; color: #444; font-size: 0.82rem; }
+  </style>
+</head>
+<body>
+
+<div id="token-overlay">
+  <div class="token-box">
+    <h2>Admin Access</h2>
+    <p>Enter your admin token to continue.</p>
+    <div>
+      <label>Admin Token</label>
+      <input type="password" id="token-input" placeholder="Bearer token…" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="btn-save-token">Continue</button>
+  </div>
+</div>
+
+<header>
+  <h1>⚙ Admin Panel</h1>
+  <a href="/">← Public View</a>
+</header>
+
+<div class="status-bar">
+  <span><span class="dot" id="plugin-dot"></span><span id="plugin-label">Plugin: checking…</span></span>
+  <span><span class="dot" id="ws-dot"></span><span id="ws-label">Live WS: connecting…</span></span>
+  <span id="catalog-age" class="catalog-info"></span>
+  <button class="btn-secondary" id="btn-clear-token" style="margin-left:auto;padding:0.3rem 0.75rem;font-size:0.75rem">Change Token</button>
+</div>
+
+<main>
+
+  <!-- Players -->
+  <section>
+    <h2>Players Online</h2>
+    <div class="section-body" style="padding:0">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="padding:0.5rem 1rem;text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:#666;border-bottom:1px solid #1e1e24">Pilot</th>
+            <th style="padding:0.5rem 1rem;text-align:left;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:#666;border-bottom:1px solid #1e1e24">Actor</th>
+            <th style="padding:0.5rem 1rem;text-align:right;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.08em;color:#666;border-bottom:1px solid #1e1e24">Action</th>
+          </tr>
+        </thead>
+        <tbody id="players-tbody">
+          <tr><td colspan="3" style="padding:1.5rem;text-align:center;color:#444;font-size:0.85rem">No players in lobby.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Track Control -->
+  <section>
+    <h2>Track Control</h2>
+    <div class="section-body">
+      <div class="row three">
+        <div>
+          <label>Environment</label>
+          <select id="env-select">
+            <option value="">— Load catalog —</option>
+          </select>
+        </div>
+        <div>
+          <label>Track</label>
+          <select id="track-select">
+            <option value="">—</option>
+          </select>
+        </div>
+        <div>
+          <label>Game Mode</label>
+          <select id="mode-select">
+            <option value="">—</option>
+          </select>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-primary" id="btn-set-track">Set Track</button>
+        <button class="btn-secondary" id="btn-next-track">Next Track ▶</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Catalog -->
+  <section>
+    <h2>Track Catalog</h2>
+    <div class="section-body">
+      <p style="font-size:0.85rem;color:#888">
+        Open the track selection popup in-game, then click refresh to discover all tracks and environments.
+      </p>
+      <div class="btn-row">
+        <button class="btn-secondary" id="btn-refresh-catalog">Refresh Catalog</button>
+      </div>
+      <div id="catalog-status" class="catalog-info"></div>
+    </div>
+  </section>
+
+  <!-- Chat -->
+  <section>
+    <h2>Chat</h2>
+    <div class="section-body">
+
+      <!-- Received messages -->
+      <div>
+        <label>Received Messages</label>
+        <ul class="chat-log" id="admin-chat-log">
+          <li class="chat-log-empty" id="admin-chat-empty">No messages received yet.</li>
+        </ul>
+      </div>
+
+      <!-- Manual send -->
+      <div>
+        <label>Send Message Now</label>
+        <div style="display:flex;gap:0.5rem">
+          <input type="text" id="chat-msg-input" placeholder="Type a message…" style="flex:1">
+          <button class="btn-primary" id="btn-send-chat" style="white-space:nowrap">Send</button>
+        </div>
+      </div>
+
+      <!-- Templates -->
+      <div style="border-top:1px solid #1e1e24;padding-top:1rem">
+        <label style="margin-bottom:0.6rem">Automated Message Templates</label>
+        <p style="font-size:0.8rem;color:#555;margin-bottom:0.75rem">
+          Variables: <code style="color:#f97316">{env}</code> <code style="color:#f97316">{track}</code>
+          <code style="color:#f97316">{race}</code> (track_change) ·
+          <code style="color:#f97316">{mins}</code> (track_change with negative delay) ·
+          <code style="color:#f97316">{winner}</code> <code style="color:#f97316">{time}</code> (race_end) ·
+          Use a <strong style="color:#f97316">negative delay</strong> on track_change to fire before the change (e.g. -120000 = 2 min warning)
+        </p>
+        <table style="width:100%;border-collapse:collapse;font-size:0.85rem" id="templates-table">
+          <thead>
+            <tr>
+              <th style="text-align:left;padding:0.4rem 0.5rem;color:#555;font-size:0.75rem;border-bottom:1px solid #1e1e24">Trigger</th>
+              <th style="text-align:left;padding:0.4rem 0.5rem;color:#555;font-size:0.75rem;border-bottom:1px solid #1e1e24">Message</th>
+              <th style="text-align:left;padding:0.4rem 0.5rem;color:#555;font-size:0.75rem;border-bottom:1px solid #1e1e24">Delay (ms)</th>
+              <th style="text-align:left;padding:0.4rem 0.5rem;color:#555;font-size:0.75rem;border-bottom:1px solid #1e1e24">On</th>
+              <th style="padding:0.4rem 0.5rem;border-bottom:1px solid #1e1e24"></th>
+            </tr>
+          </thead>
+          <tbody id="templates-body">
+            <tr><td colspan="5" style="padding:1rem;text-align:center;color:#444;font-size:0.85rem">No templates yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Add template form -->
+      <div style="border-top:1px solid #1e1e24;padding-top:1rem">
+        <label style="margin-bottom:0.6rem">Add Template</label>
+        <div class="row three" style="align-items:end">
+          <div>
+            <label>Trigger</label>
+            <select id="tmpl-trigger">
+              <option value="track_change">Track change</option>
+              <option value="race_start">Race start</option>
+              <option value="race_end">Race end</option>
+            </select>
+          </div>
+          <div>
+            <label>Delay (ms) <span style="color:#555;font-size:0.75rem">negative = before change</span></label>
+            <input type="number" id="tmpl-delay" value="0" style="width:100%">
+          </div>
+          <div style="display:flex;align-items:center;gap:0.5rem;padding-top:1.4rem">
+            <input type="checkbox" id="tmpl-enabled" checked style="width:auto">
+            <label style="margin:0">Enabled</label>
+          </div>
+        </div>
+        <div style="margin-top:0.75rem">
+          <label>Message Template</label>
+          <div style="display:flex;gap:0.5rem">
+            <input type="text" id="tmpl-template" placeholder="e.g. Track changed to {track}!" style="flex:1">
+            <button class="btn-secondary" id="btn-add-template" style="white-space:nowrap">Add</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Playlists -->
+  <section>
+    <h2>Playlists</h2>
+    <div class="section-body">
+
+      <!-- Runner status bar -->
+      <div id="runner-bar" class="runner-bar stopped">
+        <span class="runner-label">Stopped</span>
+        <span class="runner-track" id="runner-track-label"></span>
+        <span class="runner-next" id="runner-next-label"></span>
+      </div>
+
+      <div class="playlist-grid">
+
+        <!-- Left: list of playlists -->
+        <div>
+          <div class="playlist-list" id="playlist-list">
+            <div style="color:#444;font-size:0.8rem;padding:0.5rem 0">No playlists yet.</div>
+          </div>
+          <div style="margin-top:0.75rem;display:flex;gap:0.5rem">
+            <input type="text" id="new-playlist-name" placeholder="Playlist name…" style="flex:1;font-size:0.8rem">
+            <button class="btn-secondary mini-btn" id="btn-create-playlist">+ New</button>
+          </div>
+        </div>
+
+        <!-- Right: track editor -->
+        <div id="playlist-editor" style="display:none">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.75rem;flex-wrap:wrap">
+            <span id="editor-title" style="font-weight:600;font-size:0.95rem;flex:1"></span>
+            <div class="interval-row">
+              <label>Interval</label>
+              <input type="number" id="interval-mins" value="15" min="1" title="Minutes between auto-advance">
+              <label>min</label>
+            </div>
+            <button class="btn-primary mini-btn" id="start-btn">▶ Start</button>
+            <button class="btn-danger mini-btn" id="stop-btn" style="display:none">■ Stop</button>
+            <button class="btn-secondary mini-btn" id="skip-btn" style="display:none" title="Skip to next track now">⏭ Skip</button>
+          </div>
+
+          <!-- Track list -->
+          <div id="track-list" style="margin-bottom:0.75rem"></div>
+
+          <!-- Add track form -->
+          <div style="border-top:1px solid #1e1e24;padding-top:0.75rem">
+            <label style="margin-bottom:0.5rem">Add Track</label>
+            <div class="row three" style="align-items:end">
+              <div>
+                <label>Environment</label>
+                <select id="pl-env-select">
+                  <option value="">— Select —</option>
+                </select>
+              </div>
+              <div>
+                <label>Track</label>
+                <select id="pl-track-select">
+                  <option value="">—</option>
+                </select>
+              </div>
+              <div>
+                <label>Game Mode</label>
+                <select id="pl-mode-select">
+                  <option value="">— Any —</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-top:0.6rem">
+              <button class="btn-secondary" id="btn-add-track-to-playlist">+ Add Track</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="playlist-empty-hint" style="color:#444;font-size:0.85rem;padding:1rem 0">
+          Select or create a playlist to edit its tracks.
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script src="/js/shared.js"></script>
+<script src="/js/admin.js"></script>
+</body>
+</html>
