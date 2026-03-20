@@ -111,6 +111,48 @@ function skipToIndex(index) {
   _broadcastState();
 }
 
+function extendCurrentTrack(addedMs) {
+  if (!state.running || state.tracks.length === 0) return;
+  if (!state.nextChangeAt) return;
+
+  if (_timer) { clearTimeout(_timer); _timer = null; }
+  _clearPreTimers();
+
+  state.nextChangeAt = new Date(state.nextChangeAt.getTime() + addedMs);
+  const remainingMs = Math.max(0, state.nextChangeAt.getTime() - Date.now());
+
+  if (state.tracks.length > 0) {
+    let preTemplates = [];
+    try { preTemplates = db.getChatTemplatesByTrigger('track_change').filter(t => t.delay_ms < 0); } catch (_) {}
+
+    if (preTemplates.length > 0) {
+      const nextIndex = (state.currentIndex + 1) % state.tracks.length;
+      const nextTrack = state.tracks[nextIndex];
+      for (const tmpl of preTemplates) {
+        const fireAt = remainingMs + tmpl.delay_ms;
+        if (fireAt <= 0) continue;
+        let message = tmpl.template;
+        const vars = { env: nextTrack.env, track: nextTrack.track, race: nextTrack.race,
+                       mins: Math.round(Math.abs(tmpl.delay_ms) / 60000) };
+        for (const [k, v] of Object.entries(vars)) message = message.replaceAll(`{${k}}`, v ?? '');
+        message = message.trim();
+        if (!message) continue;
+        _preTimers.push(setTimeout(() => sendCommand({ cmd: 'send_chat', message }), fireAt));
+      }
+    }
+  }
+
+  _timer = setTimeout(() => {
+    state.currentIndex = (state.currentIndex + 1) % state.tracks.length;
+    _applyCurrentTrack();
+    _scheduleNext();
+    _broadcastState();
+  }, remainingMs);
+
+  _broadcastState();
+  console.log(`[playlist] Extended current track. Next change at ${state.nextChangeAt.toISOString()}`);
+}
+
 // ── Internals ────────────────────────────────────────────────────────────────
 
 function _scheduleNext() {
@@ -166,4 +208,4 @@ function _broadcastState() {
   broadcast.broadcastAll({ event_type: 'playlist_state', ...getState() });
 }
 
-module.exports = { init, getState, startPlaylist, stopPlaylist, skipToNext, skipToIndex };
+module.exports = { init, getState, startPlaylist, stopPlaylist, skipToNext, skipToIndex, extendCurrentTrack };

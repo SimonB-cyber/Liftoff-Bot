@@ -3,7 +3,7 @@ const db = require('./database');
 const state = require('./state');
 const E = require('./eventTypes');
 const broadcast = require('./broadcast');
-const skipVote = require('./skipVote');
+const voteManager = require('./voteManager');
 const { validateEvent } = require('./contracts');
 
 const PLUGIN_API_KEY = process.env.PLUGIN_API_KEY || '';
@@ -30,11 +30,11 @@ function setCurrentTrack(info) {
   // Block chat commands for a window after each track change.
   // Liftoff replays the entire chat history when the scene reloads, which causes
   // a burst of chat_message events with fresh timestamps — including old /skip and
-  // /skip messages that would otherwise re-trigger the vote system.
+  // /agree messages that would otherwise re-trigger the vote system.
   state.applyChatCooldown();
-  // Cancel any active skip vote — it no longer applies to the new track
-  if (skipVote.isActive()) {
-    skipVote.cancelSkipVote();
+  // Cancel any active vote — it no longer applies to the new track
+  if (voteManager.isActive()) {
+    voteManager.cancelVote();
   }
 }
 
@@ -102,8 +102,8 @@ function handleCommandAck(event) {
 }
 
 function createPluginSocketServer(httpServer) {
-  // Initialise the skip-vote module with access to sendCommand
-  skipVote.init(sendCommand);
+  // Initialise the vote module with access to sendCommand
+  voteManager.init(sendCommand);
 
   const wss = new WebSocketServer({ noServer: true });
 
@@ -278,12 +278,16 @@ function handlePluginEvent(jsonLine) {
     // Ignore all commands during the post-track-change cooldown window.
     if (!state.areChatCommandsAllowed()) return;
     if (msg === '/info') {
-      sendCommand({ cmd: 'send_chat', message: '<color=#00BFFF>COMMANDS</color> <color=#00FF00>/skip</color> <color=#FFFF00>(vote to skip track)</color>' });
+      sendCommand({ cmd: 'send_chat', message: '<color=#00BFFF>COMMANDS</color> <color=#00FF00>/skip</color> <color=#FFFF00>(vote to skip track)</color> <color=#00FF00>/extend</color> <color=#FFFF00>(vote to extend time)</color> <color=#00FF00>/agree</color>' });
     } else if (msg === '/skip') {
       // Use user_id (Steam ID) as the voter key — event.actor can be null if the
       // plugin couldn't resolve the Photon actor number, which causes all unresolved
       // players to collide on the same null key in the voters Set.
-      skipVote.handleSkipVoteCommand(event.user_id || event.nick);
+      voteManager.handleSkipVoteCommand(event.user_id || event.nick);
+    } else if (msg === '/extend') {
+      voteManager.handleExtendVoteCommand(event.user_id || event.nick);
+    } else if (msg === '/agree') {
+      voteManager.handleAgreeCommand(event.user_id || event.nick);
     }
   }
 
