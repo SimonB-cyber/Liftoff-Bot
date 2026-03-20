@@ -49,7 +49,7 @@ Liftoff Competition transforms a standard Liftoff multiplayer session into a str
 - Players can type `/skip` in game chat to vote for skipping the current track
 - Other players confirm with `/agree`
 - Configurable vote threshold — when enough players agree, the track advances automatically
-- `/help` command shows available player commands
+- `/info` command shows available player commands
 
 ### Live Spectator View
 - Real-time race visualization in the browser
